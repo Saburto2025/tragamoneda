@@ -1,0 +1,36 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// Single-row table holding the machine state (balance, stats, free spins...)
+model MachineState {
+  id            String   @id @default("singleton")
+  balance       Int      @default(0) // current player balance in colones
+  totalBet      Int      @default(0) // lifetime colones wagered (real money only)
+  totalPaid     Int      @default(0) // lifetime colones paid out in prizes (incl. free-spin prizes)
+  sessionPaid   Int      @default(0) // colones paid since last "Pagar" (owner pay-out)
+  totalSpins    Int      @default(0) // lifetime spin count
+  freeSpins     Int      @default(0) // free spins available
+  adminPassword String   @default("admin123")
+  updatedAt     DateTime @updatedAt
+}
+
+// Audit log of every spin (kept for stats / recent history display)
+model SpinLog {
+  id        String   @id @default(cuid())
+  bet       Int      // credits wagered (1-4). 0 is impossible; free spins still record the effective bet used
+  isFree    Boolean  // whether this spin consumed a free spin
+  mult      Int      // prize multiplier (0 = no win)
+  payout    Int      // colones won this spin
+  symbol    String   // winning symbol emoji, or "—" for no win
+  rtp       Float    // RTP right after this spin
+  createdAt DateTime @default(now())
+}
