@@ -5,9 +5,9 @@ import { resolveSpin, MIN_BET, MAX_BET, CREDIT_VALUE } from "@/lib/slot";
 
 export const dynamic = "force-dynamic";
 
-// POST /api/slot/spin  { bet: number }
+// POST /api/slot/spin  { bet: number, shop?: string }
 export async function POST(req: Request) {
-  let body: { bet?: number } = {};
+  let body: { bet?: number; shop?: string } = {};
   try {
     body = await req.json();
   } catch {
@@ -18,12 +18,42 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Apuesta inválida (1-4 créditos)." }, { status: 400 });
   }
 
+  const shopId = body.shop || "singleton";
+
+  // Check if shop is active
+  const shop = await db.shop.findUnique({ where: { id: shopId } });
+  if (shop && !shop.active) {
+    return NextResponse.json({ error: "Este negocio está desactivado. Contacte al administrador." }, { status: 403 });
+  }
+
   // Atomic read-resolve-write so two rapid spins can't race.
   const result = await db.$transaction(async (tx) => {
-    const s = await tx.machineState.upsert({
-      where: { id: "singleton" },
+    // Ensure shop exists in transaction context
+    await tx.shop.upsert({
+      where: { id: shopId },
       update: {},
-      create: { id: "singleton" },
+      create: {
+        id: shopId,
+        name: shopId === "singleton" ? "Lucky Diamond Bar" : `Negocio ${shopId}`,
+        adminPassword: "admin123",
+        barBalance: 50000,
+        active: true,
+      },
+    });
+
+    const s = await tx.machineState.upsert({
+      where: { shopId: shopId },
+      update: {},
+      create: {
+        id: shopId,
+        shopId: shopId,
+        balance: 0,
+        totalBet: 0,
+        totalPaid: 0,
+        sessionPaid: 0,
+        totalSpins: 0,
+        freeSpins: 0,
+      },
     });
 
     const isFree = s.freeSpins > 0;
@@ -43,7 +73,7 @@ export async function POST(req: Request) {
     });
 
     const updated = await tx.machineState.update({
-      where: { id: "singleton" },
+      where: { shopId: shopId },
       data: {
         balance: spin.newBalance,
         freeSpins: spin.freeSpinsRemaining,
@@ -56,6 +86,7 @@ export async function POST(req: Request) {
 
     await tx.spinLog.create({
       data: {
+        shopId,
         bet,
         isFree: spin.isFree,
         mult: spin.prize ? spin.prize.mult : 0,
@@ -92,3 +123,4 @@ export async function POST(req: Request) {
     totalSpins: updated.totalSpins,
   });
 }
+

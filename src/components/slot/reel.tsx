@@ -42,7 +42,7 @@ export function Reel({ target, spinKey, delay, spinning, highlight }: ReelProps)
   }, [spinKey, target]);
 
   const centreIndex = strip.length - 2;
-  const finalY = -(centreIndex - 1) * CELL;
+  const finalY = `-${(centreIndex / strip.length) * 100}%`;
 
   return (
     <div
@@ -61,7 +61,7 @@ export function Reel({ target, spinKey, delay, spinning, highlight }: ReelProps)
       <motion.div
         key={spinKey}
         className={`flex flex-col items-center ${spinning ? "blur-[1px]" : ""}`}
-        initial={{ y: 0 }}
+        initial={{ y: "0%" }}
         animate={{ y: finalY }}
         transition={
           spinning
@@ -83,4 +83,5 @@ export function Reel({ target, spinKey, delay, spinning, highlight }: ReelProps)
       </motion.div>
     </div>
   );
+
 }

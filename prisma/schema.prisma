@@ -11,21 +11,36 @@ datasource db {
 }
 
 // Single-row table holding the machine state (balance, stats, free spins...)
+model Shop {
+  id            String         @id
+  name          String
+  active        Boolean        @default(true)
+  barBalance    Int            @default(0) // Saldo disponible para recargas
+  adminPassword String         @default("admin123")
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  machineState  MachineState?
+  spinLogs      SpinLog[]
+}
+
 model MachineState {
-  id            String   @id @default("singleton")
+  id            String   @id
+  shopId        String   @unique
+  shop          Shop     @relation(fields: [shopId], references: [id], onDelete: Cascade)
   balance       Int      @default(0) // current player balance in colones
   totalBet      Int      @default(0) // lifetime colones wagered (real money only)
   totalPaid     Int      @default(0) // lifetime colones paid out in prizes (incl. free-spin prizes)
   sessionPaid   Int      @default(0) // colones paid since last "Pagar" (owner pay-out)
   totalSpins    Int      @default(0) // lifetime spin count
   freeSpins     Int      @default(0) // free spins available
-  adminPassword String   @default("admin123")
   updatedAt     DateTime @updatedAt
 }
 
 // Audit log of every spin (kept for stats / recent history display)
 model SpinLog {
   id        String   @id @default(cuid())
+  shopId    String   @default("singleton")
+  shop      Shop     @relation(fields: [shopId], references: [id], onDelete: Cascade)
   bet       Int      // credits wagered (1-4). 0 is impossible; free spins still record the effective bet used
   isFree    Boolean  // whether this spin consumed a free spin
   mult      Int      // prize multiplier (0 = no win)
@@ -34,3 +49,4 @@ model SpinLog {
   rtp       Float    // RTP right after this spin
   createdAt DateTime @default(now())
 }
+

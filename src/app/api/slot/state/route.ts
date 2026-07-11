@@ -4,8 +4,10 @@ import { getState } from "@/lib/machine";
 export const dynamic = "force-dynamic";
 
 // GET the current public machine state (no admin secrets).
-export async function GET() {
-  const s = await getState();
+export async function GET(req: Request) {
+  const url = new URL(req.url);
+  const shopId = url.searchParams.get("shop") || "singleton";
+  const s = await getState(shopId);
   return NextResponse.json({
     balance: s.balance,
     freeSpins: s.freeSpins,
@@ -14,5 +16,9 @@ export async function GET() {
     totalBet: s.totalBet,
     totalPaid: s.totalPaid,
     sessionPaid: s.sessionPaid,
+    active: s.active,
+    barBalance: s.barBalance,
+    shopName: s.shopName,
   });
 }
+
