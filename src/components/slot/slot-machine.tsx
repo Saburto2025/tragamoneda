@@ -74,6 +74,21 @@ export function SlotMachine() {
   const [active, setActive] = useState(true);
   const [shopName, setShopName] = useState("LUCKY DIAMOND");
 
+  // Dynamic sizing state
+  const [isMobile, setIsMobile] = useState(true);
+
+  useEffect(() => {
+    function handleResize() {
+      setIsMobile(window.innerWidth < 640);
+    }
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  const cellHeight = isMobile ? 128 : 175;
+  const cellWidth = isMobile ? 96 : 130;
+
   // Load shopId from URL query string
   useEffect(() => {
     let s = "singleton";
@@ -285,7 +300,7 @@ export function SlotMachine() {
           )}
         </AnimatePresence>
 
-        <div className="w-full max-w-5xl lg:max-h-[calc(100vh-130px)] grid lg:grid-cols-[1fr_280px] gap-4 sm:gap-6 items-stretch">
+        <div className="w-full max-w-6xl lg:max-h-[calc(100vh-130px)] grid lg:grid-cols-[1fr_300px] gap-4 sm:gap-6 items-stretch">
           {/* Cabinet Section */}
           <section className="flex flex-col justify-between rounded-3xl border border-amber-500/30 bg-gradient-to-b from-zinc-900 via-[#0d0716] to-[#040207] p-3 sm:p-5 shadow-[0_0_50px_rgba(217,119,6,0.1)]">
             
@@ -322,7 +337,7 @@ export function SlotMachine() {
             </div>
 
             {/* Reel viewport */}
-            <div className="relative rounded-2xl bg-black/75 border border-amber-500/10 p-3 sm:p-5 flex-1 flex flex-col justify-center items-center my-2 select-none overflow-hidden">
+            <div className="relative rounded-2xl bg-black/75 border border-amber-500/10 p-3 sm:p-5 flex-1 flex flex-col justify-center items-center my-2 select-none overflow-hidden min-h-[180px] sm:min-h-[260px]">
               {/* win flash box overlay */}
               <div
                 className={`pointer-events-none absolute inset-0 rounded-2xl transition-opacity duration-300 z-20 ${
@@ -332,9 +347,9 @@ export function SlotMachine() {
               />
 
               {/* Centered Reel Container */}
-              <div className="flex items-center justify-center gap-1.5 sm:gap-4 relative w-full h-full max-h-[160px] sm:max-h-[220px]">
+              <div className="flex items-center justify-center gap-2 sm:gap-6 relative w-full h-full">
                 {/* Horizontal central payline line across all reels */}
-                <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 h-[2px] bg-gradient-to-r from-transparent via-amber-400 to-transparent z-25 opacity-70 pointer-events-none" />
+                <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 h-[2px] bg-gradient-to-r from-transparent via-amber-400 to-transparent z-25 opacity-80 pointer-events-none" />
 
                 {targets.map((t, i) => (
                   <Reel
@@ -344,25 +359,28 @@ export function SlotMachine() {
                     delay={REEL_DELAYS[i]}
                     spinning={spinning}
                     highlight={highlight && !!lastResult?.won}
+                    cellHeight={cellHeight}
+                    cellWidth={cellWidth}
                   />
                 ))}
               </div>
 
-              {/* win banner messages */}
-              <div className="h-10 sm:h-12 mt-3 flex items-center justify-center z-10">
+              {/* Win banner - MAkE THE PRIZE NAME MUCH LARGER */}
+              <div className="h-16 sm:h-20 mt-4 flex items-center justify-center z-10">
                 <AnimatePresence mode="wait">
                   {lastResult?.won && lastResult.prize ? (
                     <motion.div
                       key={lastResult.prize.label + lastResult.totalSpins}
-                      initial={{ scale: 0.8, opacity: 0 }}
-                      animate={{ scale: 1, opacity: 1 }}
-                      exit={{ scale: 0.9, opacity: 0 }}
+                      initial={{ scale: 0.7, opacity: 0, rotate: -3 }}
+                      animate={{ scale: 1, opacity: 1, rotate: 0 }}
+                      exit={{ scale: 0.8, opacity: 0 }}
+                      transition={{ type: "spring", stiffness: 350, damping: 14 }}
                       className="text-center"
                     >
-                      <div className={`text-base sm:text-xl font-black ${lastResult.prize.neon} drop-shadow-[0_0_10px_currentColor]`}>
+                      <div className={`text-2xl sm:text-4xl font-black tracking-wide ${lastResult.prize.neon} drop-shadow-[0_0_15px_currentColor] uppercase`}>
                         {lastResult.prize.isJackpot ? "💎 JACKPOT 500x 💎" : `¡PREMIO ${lastResult.prize.label}!`}
                       </div>
-                      <div className="text-xs sm:text-sm font-bold text-emerald-400 mt-0.5 font-mono">
+                      <div className="text-xl sm:text-2xl font-extrabold text-emerald-400 mt-1 font-mono">
                         +{fmt(lastResult.payout)}
                       </div>
                     </motion.div>

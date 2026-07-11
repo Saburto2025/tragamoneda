@@ -15,9 +15,9 @@ interface ReelProps {
   delay: number;
   spinning: boolean;
   highlight: boolean;
+  cellHeight: number;
+  cellWidth: number;
 }
-
-const CELL = 96; // px (h-24). sm is h-28=112 but we keep 96 for the math; close enough visually
 
 function rand() {
   return POOL[Math.floor(Math.random() * POOL.length)];
@@ -28,7 +28,7 @@ function rand() {
  * whose centre cell is `target`, then animate it scrolling down into place.
  * The motion.div is keyed by spinKey so it remounts and replays cleanly.
  */
-export function Reel({ target, spinKey, delay, spinning, highlight }: ReelProps) {
+export function Reel({ target, spinKey, delay, spinning, highlight, cellHeight, cellWidth }: ReelProps) {
   const strip = useMemo(() => {
     if (!target) return INITIAL;
     const len = 26;
@@ -42,11 +42,12 @@ export function Reel({ target, spinKey, delay, spinning, highlight }: ReelProps)
   }, [spinKey, target]);
 
   const centreIndex = strip.length - 2;
-  const finalY = `-${(centreIndex / strip.length) * 100}%`;
+  const finalY = -centreIndex * cellHeight;
 
   return (
     <div
-      className={`relative h-24 sm:h-28 w-20 sm:w-24 overflow-hidden rounded-xl border-2 bg-gradient-to-b from-zinc-900 to-black shadow-inner ${
+      style={{ height: cellHeight, width: cellWidth }}
+      className={`relative overflow-hidden rounded-xl border-2 bg-gradient-to-b from-zinc-900 to-black shadow-inner transition-all ${
         highlight
           ? "border-amber-300 shadow-[0_0_25px_rgba(252,211,77,0.7)]"
           : "border-amber-500/30"
@@ -56,12 +57,12 @@ export function Reel({ target, spinKey, delay, spinning, highlight }: ReelProps)
       <div className="pointer-events-none absolute inset-x-0 top-0 h-6 bg-gradient-to-b from-black/70 to-transparent z-10" />
       <div className="pointer-events-none absolute inset-x-0 bottom-0 h-6 bg-gradient-to-t from-black/70 to-transparent z-10" />
       {/* payline */}
-      <div className="pointer-events-none absolute inset-x-0 top-1/2 -translate-y-1/2 h-px bg-amber-300/25 z-10" />
+      <div className="pointer-events-none absolute inset-x-0 top-1/2 -translate-y-1/2 h-px bg-amber-300/20 z-10" />
 
       <motion.div
         key={spinKey}
         className={`flex flex-col items-center ${spinning ? "blur-[1px]" : ""}`}
-        initial={{ y: "0%" }}
+        initial={{ y: 0 }}
         animate={{ y: finalY }}
         transition={
           spinning
@@ -72,10 +73,13 @@ export function Reel({ target, spinKey, delay, spinning, highlight }: ReelProps)
         {strip.map((s, i) => (
           <div
             key={i}
-            className="flex items-center justify-center h-24 sm:h-28 text-4xl sm:text-5xl select-none"
             style={{
+              height: cellHeight,
+              width: cellWidth,
+              fontSize: `${cellHeight * 0.52}px`,
               filter: highlight && i === centreIndex ? "drop-shadow(0 0 12px rgba(252,211,77,0.9))" : "none",
             }}
+            className="flex items-center justify-center select-none leading-none"
           >
             {s}
           </div>
@@ -83,5 +87,4 @@ export function Reel({ target, spinKey, delay, spinning, highlight }: ReelProps)
       </motion.div>
     </div>
   );
-
 }
