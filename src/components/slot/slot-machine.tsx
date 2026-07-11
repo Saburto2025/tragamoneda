@@ -86,8 +86,8 @@ export function SlotMachine() {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  const cellHeight = isMobile ? 128 : 175;
-  const cellWidth = isMobile ? 96 : 130;
+  const cellH = isMobile ? 128 : 175;
+  const cellW = isMobile ? 96 : 130;
 
   // Load shopId from URL query string
   useEffect(() => {
@@ -359,8 +359,8 @@ export function SlotMachine() {
                     delay={REEL_DELAYS[i]}
                     spinning={spinning}
                     highlight={highlight && !!lastResult?.won}
-                    cellHeight={cellHeight}
-                    cellWidth={cellWidth}
+                    cellH={cellH}
+                    cellW={cellW}
                   />
                 ))}
               </div>
